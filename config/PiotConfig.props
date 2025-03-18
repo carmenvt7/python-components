@@ -44,7 +44,7 @@ enableMqttClient = True
 enableCoapServer = False
 enableCoapClient = False
 enableSystemPerformance = True
-enableSensing    = False
+enableSensing    = True
 enableLogging    = True
 pollCycleSecs    = 5
 testGdaDataPath  = /tmp/gda-data
@@ -63,6 +63,13 @@ tempSimCeiling     =   25.0
 handleTempChangeOnDevice = True
 triggerHvacTempFloor     = 18.0
 triggerHvacTempCeiling   = 20.0
+
+ENABLE_SYSTEM_PERF_KEY = 'enableSystemPerformance'
+ENABLE_SENSING_KEY = 'enableSensing'
+
+HANDLE_TEMP_CHANGE_ON_DEVICE_KEY = 'handleTempChangeOnDevice'
+TRIGGER_HVAC_TEMP_FLOOR_KEY = 'triggerHvacTempFloor'
+TRIGGER_HVAC_TEMP_CEILING_KEY = 'triggerHvacTempCeiling'
 
 # camera settings
 streamHostAddr      = 127.0.0.1
