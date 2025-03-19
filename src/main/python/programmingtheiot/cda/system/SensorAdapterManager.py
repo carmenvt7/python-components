@@ -43,7 +43,11 @@ class SensorAdapterManager(object):
 		self.locationID   = \
 			self.configUtil.getProperty( \
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.DEVICE_LOCATION_ID_KEY, defaultVal = ConfigConst.NOT_SET)
-
+		
+		self.enableSimulator = self.configUtil.getBoolean(
+     					section=ConfigConst.CONSTRAINED_DEVICE,
+    	 					key="enableSimulator",
+ 						)
 		if self.pollRate <= 0:
 			self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES
 
@@ -58,8 +62,30 @@ class SensorAdapterManager(object):
 		self.pressureAdapter = None
 		self.tempAdapter     = None
 
+		if self.useEmulator:
+			logging.info("Using Emulators.")
+		
+					# Emulator tasks
+			try:
+				self.humidityAdapter = import_module(
+					'programmingtheiot.cda.emulated.HumiditySensorEmulatorTask').HumiditySensorEmulatorTask()
+						
+				self.pressureAdapter = import_module(
+					'programmingtheiot.cda.emulated.PressureSensorEmulatorTask').PressureSensorEmulatorTask()
+						
+				self.tempAdapter = import_module(
+					'programmingtheiot.cda.emulated.TemperatureSensorEmulatorTask').TemperatureSensorEmulatorTask()
+						
+				logging.info("Emulator tasks loaded successfully.")
+		
+			except ImportError as e:
+				logging.warning("Failed to load emulator tasks: " + str(e))
+		
+		else:
+			logging.info("Using real Sensors.")
+
 		# see PIOT-CDA-03-006 description for thoughts on the next line of code
-		self._initEnvironmentalSensorTasks()
+			self._initEnvironmentalSensorTasks()
 
 	def _initEnvironmentalSensorTasks(self):
 		humidityFloor   = \
@@ -74,7 +100,7 @@ class SensorAdapterManager(object):
 				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.PRESSURE_SIM_FLOOR_KEY, defaultVal = SensorDataGenerator.LOW_NORMAL_ENV_PRESSURE)
 		pressureCeiling = \
 			self.configUtil.getFloat( \
-				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.PRESSURE_SIM_CEILING_KEY, defaultVal = SensorDataGenerator.HI_NORMAL_ENV_PRESSURE)
+				section = ConfigConst.CONSTRAINED_DEVICE, key = ConfigConst.PRESSURE_SIM_CEILING_KEY, defaultVal = SensorDataGenerator.LOW_NORMAL_ENV_PRESSURE)
 
 		tempFloor       = \
 			self.configUtil.getFloat( \
@@ -100,6 +126,18 @@ class SensorAdapterManager(object):
 			self.pressureAdapter = PressureSensorSimTask(dataSet = pressureData)
 			self.tempAdapter     = TemperatureSensorSimTask(dataSet = tempData)
 
+		else:
+			heModule = import_module('programmingtheiot.cda.emulated.HumiditySensorEmulatorTask', 'HumiditySensorEmulatorTask')
+			heClazz = getattr(heModule, 'HumiditySensorEmulatorTask')
+			self.humidityAdapter = heClazz()
+
+			peModule = import_module('programmingtheiot.cda.emulated.PressureSensorEmulatorTask', 'PressureSensorEmulatorTask')
+			peClazz = getattr(peModule, 'PressureSensorEmulatorTask')
+			self.pressureAdapter = peClazz()
+
+			teModule = import_module('programmingtheiot.cda.emulated.TemperatureSensorEmulatorTask', 'TemperatureSensorEmulatorTask')
+			teClazz = getattr(teModule, 'TemperatureSensorEmulatorTask')
+			self.tempAdapter = teClazz()
 
 	def handleTelemetry(self):
 		humidityData = self.humidityAdapter.generateTelemetry()
