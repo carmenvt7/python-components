@@ -32,6 +32,7 @@ from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
 from programmingtheiot.common.ConfigUtil import ConfigUtil
 import programmingtheiot.common.ConfigConst as ConfigConst
 
+from programmingtheiot.cda.connection.CoapClientConnector import CoapClientConnector
 class DeviceDataManager(IDataMessageListener):
 	"""
 	Shell representation of class for student implementation.
@@ -74,6 +75,15 @@ class DeviceDataManager(IDataMessageListener):
 		self.coapClient         = None
 		self.coapServer         = None
 
+		self.enableCoapClient = self.configUtil.getBoolean(
+			section=ConfigConst.CONSTRAINED_DEVICE,
+			key=ConfigConst.ENABLE_COAP_CLIENT_KEY
+		)
+
+		if self.enableCoapClient:
+			self.coapClient = CoapClientConnector(dataMsgListener=self)
+			logging.info("Local CoAP client enabled")
+			
 		if self.enableSystemPerf:
 			self.sysPerfMgr = SystemPerformanceManager()
 			self.sysPerfMgr.setDataMessageListener(self)
