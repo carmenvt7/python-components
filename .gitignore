@@ -1,5 +1,5 @@
-**/*.pyc
-**/cert
-**/cred
-**/venv
-.venv
+.venv/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
