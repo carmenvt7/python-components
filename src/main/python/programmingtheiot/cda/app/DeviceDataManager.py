@@ -29,6 +29,9 @@ from programmingtheiot.data.ActuatorData import ActuatorData
 from programmingtheiot.data.SensorData import SensorData
 from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
 
+from programmingtheiot.common.ConfigUtil import ConfigUtil
+import programmingtheiot.common.ConfigConst as ConfigConst
+
 class DeviceDataManager(IDataMessageListener):
 	"""
 	Shell representation of class for student implementation.
@@ -37,6 +40,19 @@ class DeviceDataManager(IDataMessageListener):
 	
 	def __init__(self):
 		self.configUtil = ConfigUtil()
+
+		self.enableMqttClient = self.configUtil.getBoolean(
+			section = ConfigConst.CONSTRAINED_DEVICE,
+			key = ConfigConst.ENABLE_MQTT_CLIENT_KEY
+		)
+
+		self.mqttClient = None
+
+		if self.enableMqttClient:
+			self.mqttClient = MqttClientConnector()
+			self.mqttClient.setDataMessageListener(self)
+
+
 
 		self.enableSystemPerf   = \
 			self.configUtil.getBoolean( \
@@ -83,7 +99,7 @@ class DeviceDataManager(IDataMessageListener):
 		self.triggerHvacTempCeiling   = \
 			self.configUtil.getFloat( \
 				ConfigConst.CONSTRAINED_DEVICE, ConfigConst.TRIGGER_HVAC_TEMP_CEILING_KEY);
-		
+
 	def getLatestActuatorDataResponseFromCache(self, name: str = None) -> ActuatorData:
 		"""
 		Retrieves the named actuator data (response) item from the internal data cache.
@@ -220,6 +236,20 @@ class DeviceDataManager(IDataMessageListener):
 		pass
 			
 	def startManager(self):
+
+		if self.mqttClient:
+			self.mqttClient.connectClient()
+			self.mqttClient.subscribeToTopic(
+				ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE,
+				callback=None,
+				qos=ConfigConst.DEFAULT_QOS
+			)
+		
+	def stopManager(self):
+		if self.mqttClient:
+			self.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE)
+			self.mqttClient.disconnectClient()
+
 		logging.info("Starting DeviceDataManager...")
 
 		if self.sysPerfMgr:
@@ -240,6 +270,7 @@ class DeviceDataManager(IDataMessageListener):
 			self.sensorAdapterMgr.stopManager()
 
 		logging.info("Stopped DeviceDataManager.")
+
 		
 	def _handleIncomingDataAnalysis(self, msg: str):
 		"""

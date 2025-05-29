@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 **/*.pyc
 **/cert
 **/cred
 **/venv
 .venv
+=======
+.venv/
+__pycache__/
+*.pyc
+*.log
+>>>>>>> 335b2002a7b612fa4ba289fd950ad06e1aea9d9f
 .DS_Store
