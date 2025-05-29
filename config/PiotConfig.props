@@ -38,14 +38,16 @@ enableCrypt    = False
 #
 [ConstrainedDevice]
 deviceLocationID = constraineddevice001
-enableEmulator   = False
+enableEmulator   = True
 enableSenseHAT   = False
 enableMqttClient = True
 enableCoapServer = False
 enableCoapClient = False
 enableSystemPerformance = True
-enableSensing    = False
+enableSensing    = True
 enableLogging    = True
+enableSimulator = True
+enableAction = True
 pollCycleSecs    = 5
 testGdaDataPath  = /tmp/gda-data
 testCdaDataPath  = /tmp/cda-data
@@ -63,6 +65,7 @@ tempSimCeiling     =   25.0
 handleTempChangeOnDevice = True
 triggerHvacTempFloor     = 18.0
 triggerHvacTempCeiling   = 20.0
+
 
 # camera settings
 streamHostAddr      = 127.0.0.1
