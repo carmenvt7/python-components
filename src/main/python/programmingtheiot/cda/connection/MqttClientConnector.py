@@ -12,6 +12,7 @@ import paho.mqtt.client as mqttClient
 import ssl
 import programmingtheiot.common.ConfigConst as ConfigConst
 
+from programmingtheiot.data.DataUtil import DataUtil
 from programmingtheiot.common.ConfigUtil import ConfigUtil
 from programmingtheiot.common.IDataMessageListener import IDataMessageListener
 from programmingtheiot.common.ResourceNameEnum import ResourceNameEnum
@@ -129,7 +130,15 @@ class MqttClientConnector(IPubSubClient):
             return False
         
     def onConnect(self, client, userdata, flags, rc):
-        logging.info('MQTT client connected to broker: ' + str(client))
+        logging.info('[Callback] Connected to MQTT broker. Result code: ' + str(rc))
+
+        # NOTE: Be sure to set `self.defaultQos` during instantiation!
+        self.mqttClient.subscribe( \
+            topic = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value, qos = self.defaultQos)
+
+        self.mqttClient.message_callback_add( \
+            sub = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value, \
+            callback = self.onActuatorCommandMessage)
         
     def onDisconnect(self, client, userdata, rc):
         logging.info('MQTT client disconnected from broker: ' + str(client))
@@ -150,19 +159,16 @@ class MqttClientConnector(IPubSubClient):
         logging.info('MQTT client subscribed: ' + str(client))
     
     def onActuatorCommandMessage(self, client, userdata, msg):
-        """
-        This callback is defined as a convenience, but does not
-        need to be used and can be ignored.
-        
-        It's simply an example for how you can create your own
-        custom callback for incoming messages from a specific
-        topic subscription (such as for actuator commands).
-        
-        @param client The client reference context.
-        @param userdata The user reference context.
-        @param msg The message context, including the embedded payload.
-        """
-        pass
+        logging.info('[Callback] Actuator command message received. Topic: %s.', msg.topic)
+
+        if self.dataMsgListener:
+            try:
+                # assumes all data is encoded using UTF-8 (between GDA and CDA)
+                actuatorData = DataUtil().jsonToActuatorData(msg.payload.decode('utf-8'))
+
+                self.dataMsgListener.handleActuatorCommandMessage(actuatorData)
+            except:
+                logging.exception("Failed to convert incoming actuation command payload to ActuatorData: ")
     
     def publishMessage(self, resource: ResourceNameEnum = None, msg: str = None, qos: int = ConfigConst.DEFAULT_QOS) -> bool:
         # check validity of resource (topic)
