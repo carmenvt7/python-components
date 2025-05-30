@@ -145,13 +145,11 @@ class DeviceDataManager(IDataMessageListener):
 		@param data The incoming ActuatorData command message.
 		@return boolean
 		"""
-		logging.info("Actuator data: " + str(data))
-
 		if data:
 			logging.info("Processing actuator command message.")
 			return self.actuatorAdapterMgr.sendActuatorCommand(data)
 		else:
-			logging.warning("Incoming actuator command is invalid (null). Ignoring.")
+			logging.warning("Received invalid ActuatorData command message. Ignoring.")
 			return None
 	
 	def handleActuatorCommandResponse(self, data: ActuatorData) -> bool:
